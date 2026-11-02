@@ -1,0 +1,6 @@
+streamlit>=1.51
+pandas
+plotly
+statsmodels
+scipy
+holidays

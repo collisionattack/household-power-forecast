@@ -1,0 +1,8 @@
+-r requirements.txt
+prophet
+lightgbm
+requests
+matplotlib
+seaborn
+jupyter
+pytest

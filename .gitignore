@@ -1,0 +1,5 @@
+raw/
+__pycache__/
+*.log
+.hallmark/
+.DS_Store

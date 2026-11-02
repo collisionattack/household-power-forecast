@@ -1,0 +1,70 @@
+{
+ "Seasonal naive": {
+  "params": {},
+  "cv_mae": 6.532
+ },
+ "SARIMA": {
+  "params": {
+   "order": [
+    2,
+    0,
+    1
+   ],
+   "seasonal_order": [
+    0,
+    1,
+    1,
+    7
+   ]
+  },
+  "cv_mae": 3.993
+ },
+ "SARIMAX + weather": {
+  "params": {
+   "order": [
+    1,
+    0,
+    1
+   ],
+   "seasonal_order": [
+    0,
+    1,
+    1,
+    7
+   ]
+  },
+  "cv_mae": 4.368
+ },
+ "Prophet": {
+  "params": {
+   "changepoint_prior_scale": 0.01,
+   "seasonality_prior_scale": 1,
+   "seasonality_mode": "multiplicative"
+  },
+  "cv_mae": 4.491
+ },
+ "Prophet + weather": {
+  "params": {
+   "changepoint_prior_scale": 0.01,
+   "seasonality_prior_scale": 1,
+   "seasonality_mode": "multiplicative"
+  },
+  "cv_mae": 4.525
+ },
+ "LightGBM": {
+  "params": {
+   "num_leaves": 7,
+   "learning_rate": 0.1,
+   "min_child_samples": 50
+  },
+  "cv_mae": 3.948
+ },
+ "LightGBM + weather": {
+  "params": {
+   "num_leaves": 7,
+   "learning_rate": 0.03,
+   "min_child_samples": 50
+  },
+  "cv_mae": 4.72
+ }
+}
