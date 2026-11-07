@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 import evaluate as ev
+from backtest import load_params
 from data import to_daily
 from models import MODELS, grid
 
@@ -30,7 +31,7 @@ def _fake_bt(n_weeks=30):
     return pd.concat(rows, ignore_index=True)
 
 
-def test_intervals_use_only_past_errors_and_cover_roughly_right():
+def test_intervals_use_only_past_errors():
     bt = _fake_bt()
     bi = ev.add_intervals(bt)
     assert bi[bi.origin < bi.origin.min() + pd.Timedelta(weeks=ev.CALIB)].lo.isna().all()  # no band without history
@@ -42,11 +43,11 @@ def test_intervals_use_only_past_errors_and_cover_roughly_right():
     assert 0.65 < ev.coverage(bi).coverage.min() < 0.95
 
 
-def test_paired_test_detects_a_real_gap_and_metrics_baseline_skill_is_zero():
+def test_paired_test_finds_a_real_gap_and_baseline_improvement_is_zero():
     bt = _fake_bt()
     t = ev.paired_tests(bt, [("Seasonal naive", "A")]).iloc[0]
     assert t.mean_diff > 0 and t.p_holm < 0.05 and t.ci_lo > 0
-    assert ev.metrics(bt).loc["Seasonal naive", "İyileşme %"] == 0
+    assert ev.metrics(bt).loc["Seasonal naive", "Improvement %"] == 0
 
 
 def test_models_return_h_future_days():
@@ -56,3 +57,7 @@ def test_models_return_h_future_days():
     for name, (fn, space) in MODELS.items():
         p = fn(y, 7, x, **grid(space)[0])
         assert len(p) == 7 and p.index[0] == y.index[-1] + pd.Timedelta("1D") and p.notna().all()
+
+
+def test_saved_params_load_as_tuples():
+    assert isinstance(load_params()["SARIMA"]["order"], tuple)

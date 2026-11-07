@@ -55,6 +55,6 @@ err = (w.pred - w.actual).abs().mean()
 right.write(f"Bu hafta {model} ortalama {err:.1f} kWh şaştı (baseline: {(base.pred - base.actual).abs().mean():.1f} kWh).")
 
 st.subheader(f"Modeller, son {bt.origin.nunique()} hafta")
-st.table(M.rename_axis("Model").style.format({"MAE": "{:.2f}", "RMSE": "{:.2f}", "MAE %": "{:.1f}", "sMAPE %": "{:.1f}",
-                                              "İyileşme %": "{:.1f}", "Yanlılık": "{:+.2f}"}))
+st.table(M.rename(columns={"Improvement %": "İyileşme %", "Bias": "Yanlılık"}).rename_axis("Model").style.format(
+    {"MAE": "{:.2f}", "RMSE": "{:.2f}", "MAE %": "{:.1f}", "sMAPE %": "{:.1f}", "İyileşme %": "{:.1f}", "Yanlılık": "{:+.2f}"}))
 st.caption("MAE, RMSE ve yanlılık kWh/gün cinsindendir.")

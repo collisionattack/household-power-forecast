@@ -1,4 +1,4 @@
-"""Grid search per model with rolling-origin CV on data BEFORE the backtest window (no leakage) -> data/params.json."""
+"""Grid search per model on the weeks just before the backtest window; writes data/params.json."""
 import json
 import sys
 from pathlib import Path
@@ -9,7 +9,7 @@ from backtest import H, WINDOWS, load
 from models import MODELS, grid
 
 ROOT = Path(__file__).parent
-CV_ORIGINS = 4  # 4 weekly origins right before the backtest window
+CV_ORIGINS = 4  # weekly forecast origins used for tuning
 
 
 def tune(df: pd.DataFrame, names: list[str]) -> dict:

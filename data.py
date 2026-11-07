@@ -10,7 +10,7 @@ OUT = ROOT / "data" / "daily.csv"
 
 
 def to_daily(raw: pd.DataFrame) -> pd.DataFrame:
-    """Minute rows -> daily kWh. Mean of present minutes * 1440, so missing minutes don't shrink a day."""
+    """Minute rows -> daily kWh: mean kW of the minutes present x 24 h, so missing minutes do not shrink a day."""
     m = raw[["Global_active_power", "Sub_metering_1", "Sub_metering_2", "Sub_metering_3"]].resample("D").mean()
     d = pd.DataFrame({
         "kwh": m.Global_active_power * 24,  # mean kW * 24 h
@@ -24,11 +24,13 @@ def to_daily(raw: pd.DataFrame) -> pd.DataFrame:
 
 
 def fetch_weather(start: str, end: str) -> pd.DataFrame:
-    """Open-Meteo archive (free, no key) for Sceaux, France (the household's town)."""
+    """Daily weather from the Open-Meteo archive for Sceaux, France."""
     url = ("https://archive-api.open-meteo.com/v1/archive?latitude=48.78&longitude=2.29"
            f"&start_date={start}&end_date={end}&timezone=Europe%2FParis"
            "&daily=temperature_2m_mean,sunshine_duration,precipitation_sum")
-    w = pd.DataFrame(requests.get(url, timeout=60).json()["daily"]).set_index("time")
+    resp = requests.get(url, timeout=60)
+    resp.raise_for_status()
+    w = pd.DataFrame(resp.json()["daily"]).set_index("time")
     w.index = pd.to_datetime(w.index)
     w.columns = ["temp", "sunshine_h", "precip_mm"]
     w["sunshine_h"] /= 3600

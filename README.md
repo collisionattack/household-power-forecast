@@ -1,36 +1,16 @@
-# Household Power Forecast
+# Household power forecast
 
-7-day-ahead forecast of daily electricity use for one French household (UCI dataset, 2006–2010). It has an EDA notebook, a rolling backtest of 7 models, a reliability analysis in `evaluate.py` and `sensitivity.py` (prediction intervals, significance tests, weather sensitivity, error breakdown) and a small Streamlit demo with a Turkish UI.
+Seven models forecast one French household's daily electricity use 7 days ahead, compared on a 52-week rolling backtest. Data: [UCI Individual Household Electric Power Consumption](https://archive.ics.uci.edu/dataset/235), one reading per minute, 2006–2010.
 
-## Run
-```bash
-pip install -r requirements.txt        # app only; requirements-dev.txt adds prophet, lightgbm, jupyter, pytest
-streamlit run app.py          # reads the committed data/*.csv, no raw file needed
-```
+Live demo: https://household-power-forecast.streamlit.app (Turkish UI)
 
-## Notebook (Turkish, outputs included)
-- `notebooks/eda.ipynb`: missingness, seasonality (STL, ACF/PACF), stationarity, weather link, sub-meters. Section 1 needs the raw file.
+![Demo](docs/demo.png)
 
-## Rebuild from scratch
-```bash
-# put household_power_consumption.txt in raw/ (https://archive.ics.uci.edu/dataset/235)
-python data.py            # minute data -> daily kWh + Open-Meteo weather -> data/daily.csv
-python tune.py            # grid search, rolling CV on data before the backtest window -> data/params.json
-python backtest.py        # 52 weekly rolling-origin 7-day forecasts -> data/backtest.csv   (~15 min)
-python sensitivity.py     # weather-forecast noise sensitivity -> data/sensitivity.csv      (~35 min)
-pytest
-```
-`tune.py` and `backtest.py` accept model names to rerun only those, e.g. `python backtest.py LightGBM`.
+## Results
 
-## Method
-- Target: daily kWh (mean of available minutes × 24; 9 fully missing days interpolated).
-- Models: seasonal naive (baseline), SARIMA, SARIMAX + weather, Prophet, Prophet + weather, LightGBM, LightGBM + weather. Weather: temperature, sunshine hours.
-- Evaluation: refit before each of the last 52 weekly origins; metrics defined in `evaluate.METRIC_HELP`.
-- Intervals: pred ± the 80% quantile of the model's own earlier absolute errors (no look-ahead).
-- Significance: paired over weekly windows, Wilcoxon + bootstrap CI, Holm-corrected within each family of comparisons.
+Every week each model is refit on the data up to that day and forecasts the next 7. The baseline, Seasonal naive, repeats the previous week. Error is mean absolute error in kWh per day; average use is 26 kWh per day.
 
-## Results (52 × 7 days)
-| model | MAE kWh/day | vs baseline |
+| model | MAE | vs baseline |
 |---|---|---|
 | LightGBM | 4.66 | −26% |
 | LightGBM + weather | 4.67 | −26% |
@@ -40,11 +20,56 @@ pytest
 | SARIMAX + weather | 4.87 | −23% |
 | Seasonal naive | 6.28 | 0 |
 
-- All six models beat the baseline (Holm p < 0.001).
-- Weather adds nothing detectable (0 of 3 pairs significant) and the models cannot be ranked against each other. "Not significant" is not "equal": the CIs are about ±0.3 kWh wide.
-- The 80% interval covers 80–86% of actuals overall (Fri 98%, Sat–Sun 72–75%) and is wide (≈ 15 kWh).
+Every model beats the baseline by about 1.5 kWh a day, and none is clearly better than the others.
 
-## Caveats
+- All six beat the baseline by 1.4–1.6 kWh a day (paired Wilcoxon test, Holm-corrected p < 0.001).
+- The 95% intervals of the differences between models span about ±0.35 kWh on average, so the ranking above is not reliable.
+- Weather did not help: none of the 3 pairs with and without weather is significant. Adding noise to the weather made SARIMAX and LightGBM worse.
+- The 80% prediction interval covers 80–86% of actual values and is about 15 kWh wide. It covers weekends worse: about 73%, against 87% on weekdays.
+
+![Seasonality](docs/seasonality.png)
+
+## Files
+
+| file | what it does |
+|---|---|
+| `data.py` | Minute data to daily kWh, plus Open-Meteo weather. |
+| `models.py` | The seven models behind one `fn(y, h, x, **params)` interface. |
+| `tune.py` | Grid search on the 4 weeks before the backtest window. |
+| `backtest.py` | 52 weekly forecasts, each model refit every time. |
+| `evaluate.py` | Metrics, 80% intervals, paired tests, error breakdowns. |
+| `sensitivity.py` | Re-runs the weather models with noise added to the weather. |
+| `report.py` | Prints the tables behind the numbers above. |
+| `notebooks/eda.ipynb` | Exploratory analysis, in Turkish. |
+
+## Run
+
+Python 3.12 or 3.13.
+
+```bash
+pip install -r requirements.txt
+streamlit run app.py        # reads the committed data/*.csv
+```
+
+To rebuild everything, download `household_power_consumption.txt` from the UCI page above into `raw/`, then:
+
+```bash
+pip install -r requirements-dev.txt
+python data.py              # data/daily.csv
+python tune.py              # data/params.json
+python backtest.py          # data/backtest.csv, about 15 min
+python sensitivity.py       # data/sensitivity.csv, about 12 min
+python report.py            # prints the results
+pytest
+```
+
+`tune.py` and `backtest.py` accept model names to rerun only those, for example `python backtest.py LightGBM`.
+
+## Limits
+
 - One household, one test year.
-- The backtest always forecasts from a Thursday, so horizon and weekday are confounded.
-- Weather models get observed weather for the forecast days; see the sensitivity analysis for noisy weather.
+- 9 days have no readings at all and are interpolated.
+- Forecasts are made on Thursdays, so every one starts on a Friday and days ahead cannot be told apart from weekday.
+- The weather models are given the observed weather of the forecast days. Real forecasts are worse; `sensitivity.py` simulates that.
+- Hyperparameters were tuned on only 4 weeks.
+- The interval is symmetric, and the first 12 weeks have none.

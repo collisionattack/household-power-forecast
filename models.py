@@ -1,8 +1,7 @@
-"""Forecasters, one contract: fn(y, h, x, **params) -> Series of the h days after y.
+"""Each model is fn(y, h, x, **params) and returns the h days after y.
 
-y: daily kWh up to the origin. x: weather for ALL dates (train + future).
-Future weather is the observed value: this measures "how much does weather help",
-live you would feed in a weather forecast instead (Open-Meteo has a forecast endpoint).
+y is daily kWh up to the forecast date; x is weather for all dates. Weather models get the observed weather of the
+forecast days. A live system would use a weather forecast instead.
 """
 import itertools
 import logging

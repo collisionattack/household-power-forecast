@@ -1,5 +1,11 @@
 raw/
 __pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+.env
+.streamlit/secrets.toml
 *.log
-.hallmark/
 .DS_Store
+sunum*
+~$*

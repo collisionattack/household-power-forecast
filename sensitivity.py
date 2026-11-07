@@ -1,12 +1,8 @@
-"""How much of the weather gain survives an imperfect weather forecast?
+"""Re-runs the weather models with Gaussian noise added to the weather of the 7 forecast days.
 
-The backtest feeds weather models the OBSERVED weather of the 7 forecast days. Real forecasts have errors and archived 2006-2010
-forecasts do not exist, so we add Gaussian noise to the forecast-window weather: noise sd = alpha * the series' own daily sd
-(temp 6.4 C, sunshine 4.6 h). alpha=1 is a very pessimistic case (error as large as the series' own spread; the noisy "forecast" still correlates ~0.7 with truth).
-Noise is independent per day; real forecast errors are autocorrelated.
-Training weather stays observed. Output: data/sensitivity.csv (alpha, model, origin, date, actual, pred).
+Noise sd = alpha x the variable's own daily sd (temperature 6.4 C, sunshine 4.6 h). Training weather stays observed.
+The noise is independent per day; real forecast errors are autocorrelated. Writes data/sensitivity.csv.
 """
-import sys
 from pathlib import Path
 
 import numpy as np

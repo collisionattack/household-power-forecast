@@ -1,4 +1,7 @@
 -r requirements.txt
+statsmodels
+scipy
+holidays
 prophet
 lightgbm
 requests
